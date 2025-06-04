@@ -2,5 +2,5 @@ from django.urls import path
 from .views import reliefweb_disasters
 
 urlpatterns = [
-    path('reliefweb/disasters/', reliefweb_disasters),
+    path('disasters/', reliefweb_disasters),
 ]
