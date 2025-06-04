@@ -1,6 +1,6 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from lib.permissions import isOwnerOrReadOnly
+from lib.permissions import CommentOwnerOrReadOnly
 from .models import Comment
 from .serializers.common import CommentSerializer
 from rest_framework.exceptions import ValidationError
@@ -22,4 +22,4 @@ class CommentListView(ListCreateAPIView):
 class CommentDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [isOwnerOrReadOnly]
+    permission_classes = [CommentOwnerOrReadOnly]

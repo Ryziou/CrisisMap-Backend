@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'users',
     'comments',
-    'reliefweb'
+    'reliefweb',
+    
 ]
 
 SIMPLE_JWT = {
