@@ -16,7 +16,7 @@ class CommentListView(ListCreateAPIView):
         return Comment.objects.filter(event=event_id).order_by('-created_at')
 
     def perform_create(self, serializer):
-        return self.save(author=self.request.user)
+        serializer.save(author=self.request.user)
 
 
 class CommentDetailView(RetrieveUpdateDestroyAPIView):
