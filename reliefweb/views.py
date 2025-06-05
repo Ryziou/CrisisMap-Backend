@@ -14,7 +14,8 @@ def reliefweb_disasters(request):
                 'primary_type',
                 'type',
                 'url',
-                'date'
+                'date',
+                'description'
             ]
         },
         'limit': 30,
