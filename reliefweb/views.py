@@ -4,10 +4,25 @@ from rest_framework.decorators import api_view
 
 @api_view(['GET'])
 def reliefweb_disasters(request):
-    params = request.GET.copy()
-    params['appname'] = 'CrisisMap'
-    response = requests.get(
+    query = {
+        'fields': {
+            'include': [
+                'name',
+                'status',
+                'primary_country',
+                'country',
+                'primary_type',
+                'type',
+                'url',
+                'date'
+            ]
+        },
+        'limit': 30,
+        'sort': ['date:desc']
+    }
+
+    response = requests.post(
         'https://api.reliefweb.int/v1/disasters',
-        params=params
+        json=query
     )
     return JsonResponse(response.json(), safe=False)
