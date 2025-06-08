@@ -15,6 +15,7 @@ def reliefweb_disasters(request):
     query = {
         'fields': {
             'include': [
+                'id',
                 'name',
                 'status',
                 'primary_country',
