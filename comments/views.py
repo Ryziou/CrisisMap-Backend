@@ -11,9 +11,14 @@ class CommentListView(ListCreateAPIView):
 
     def get_queryset(self):
         event_id = self.request.query_params.get('event')
-        if not event_id:
-            raise ValidationError({ 'event': 'Event ID is required in query parameters'})
-        return Comment.objects.filter(event=event_id).order_by('-created_at')
+        user_id = self.request.query_params.get('user')
+
+        if event_id:
+            return Comment.objects.filter(event=event_id).order_by('-created_at')
+        elif user_id:
+            return Comment.objects.filter(author=user_id).order_by('-created_at')
+        else:
+            raise ValidationError({ 'detail': 'Query parameter for event or user is required'})
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
