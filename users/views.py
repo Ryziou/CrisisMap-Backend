@@ -21,6 +21,17 @@ class ProfileView(APIView):
         profile = ProfileSerializer(request.user)
         return Response(profile.data)
     
+    def put(self, request):
+        user = request.user
+        edit_serializer = UserSerializer(user, data=request.data, partial=True)
+        edit_serializer.is_valid(raise_exception=True)
+        edit_serializer.save()
+        return Response(edit_serializer.data)
+    
+    def delete(self, request):
+        request.user.delete()
+        return Response({ 'detail': 'User deleted'}, status=204)
+    
 class PublicProfileView(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
 
