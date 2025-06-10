@@ -27,7 +27,7 @@ def reliefweb_disasters(request):
                 'description'
             ]
         },
-        'limit': 30,
+        'limit': 500,
         'sort': ['date:desc']
     }
 
