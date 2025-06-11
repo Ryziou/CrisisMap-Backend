@@ -4,10 +4,12 @@ from .serializers.common import UserSerializer
 from .serializers.populated import ProfileSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 
 class RegisterUserView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         serialized_user = UserSerializer(data=request.data)
         serialized_user.is_valid(raise_exception=True)
