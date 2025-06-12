@@ -8,7 +8,7 @@ The application supports full user authentication, including account registerati
 
 This was created by using React, JavaScript, CSS, Django REST Framework, PostgreSQL, Mapbox GL JS, Recharts, React Router, Axios, ReactMarkdown, Remark-GFM, HeadlessUI, and Heroicons.
 
-Front-end: https://github.com/Ryziou/CrisisMap-Frontend 
+Front-end: https://github.com/Ryziou/CrisisMap-Frontend  
 Back-end: https://github.com/Ryziou/CrisisMap-Backend
 
 
@@ -208,11 +208,11 @@ The interactive map sidebar was designed to replicate the feel of Google Maps' o
             {country}
             {affected}
             <ReactMarkdown>{disaster.description}</ReactMarkdown>
-    </TabPanel>
-    <TabPanel>
-      <Comments eventId={disaster.id} />
-    </TabPanel>
-  </TabPanels>
+        </TabPanel>
+        <TabPanel>
+            <Comments eventId={disaster.id} />
+        </TabPanel>
+    </TabPanels>
 </TabGroup>
 ```
 I'm happy about how this turned out and allowed users to interact with the dynamic content without leaving the map view. With ```@headlessui/react```'s tabs, I can enable state-driven rendering and use ReactMarkdown to format the description from ReliefWeb text.
