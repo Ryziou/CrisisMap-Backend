@@ -71,7 +71,7 @@ def reliefweb_stats(request):
     # 4. Latest 500 disasters (for stats & counts)
     # -----------------------------
     latest_query = {
-        "limit": 500,
+        "limit": 150,
         "sort": ["date:desc"],
         "fields": {
             "include": ["primary_type", "primary_country", "status", "date"]
