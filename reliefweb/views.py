@@ -9,7 +9,7 @@ HEADERS = {
 
 def get_reliefweb_stats(query):
     response = requests.post(
-        'https://api.reliefweb.int/v1/disasters',
+        'https://api.reliefweb.int/v2/disasters',
         json=query,
         headers=HEADERS
     )
@@ -37,7 +37,7 @@ def reliefweb_disasters(request):
     }
 
     response = requests.post(
-        'https://api.reliefweb.int/v1/disasters',
+        'https://api.reliefweb.int/v2/disasters',
         json=query,
         headers=HEADERS
     )
