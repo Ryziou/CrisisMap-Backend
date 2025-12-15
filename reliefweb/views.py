@@ -7,150 +7,85 @@ HEADERS = {
     'User-Agent': 'CallumLiu-CrisisMap-CL96'
 }
 
-def get_reliefweb_stats(query):
-    response = requests.post(
-        'https://api.reliefweb.int/v2/disasters',
-        json=query,
-        headers=HEADERS
-    )
-    return response.json()
+BASE_URL = "https://api.reliefweb.int/v2/disasters"
+
+
+def get_reliefweb_stats(params):
+    try:
+        response = requests.get(BASE_URL, headers=HEADERS, params=params, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException:
+        return {"data": [], "totalCount": 0}
+
 
 @api_view(['GET'])
 def reliefweb_disasters(request):
-    query = {
-        'fields': {
-            'include': [
-                'id',
-                'name',
-                'status',
-                'primary_country',
-                'country',
-                'primary_type',
-                'type',
-                'url',
-                'date',
-                'description'
-            ]
-        },
-        'limit': 500,
-        'sort': ['date:desc']
+    params = {
+        'fields[include][]': [
+            'id', 'name', 'status', 'primary_country', 'country',
+            'primary_type', 'type', 'url', 'date', 'description'
+        ],
+        'limit': 100,  # reduce limit to prevent timeouts
+        'sort[]': 'date:desc'
     }
 
-    response = requests.post(
-        'https://api.reliefweb.int/v2/disasters',
-        json=query,
-        headers=HEADERS
-    )
-    return JsonResponse(response.json(), safe=False)
+    data = get_reliefweb_stats(params)
+    return JsonResponse(data, safe=False)
+
 
 @api_view(['GET'])
 def reliefweb_stats(request):
-    # Total Amount of Disasters
-    total_query = { 'limit': 0}
-    total_data = get_reliefweb_stats(total_query)
+    # Total disasters
+    total_data = get_reliefweb_stats({'limit': 0})
     total_disasters = total_data.get('totalCount', 0)
 
-    # Total Amount of Active Disasters
-    active_query = {
-        'limit': 0,
-        'filter': {
-            'field': 'status',
-            'value': 'alert'
-        }
-    }
-    active_data = get_reliefweb_stats(active_query)
+    # Active disasters (status = alert)
+    active_data = get_reliefweb_stats({'limit': 0, 'filter[field]': 'status', 'filter[value]': 'alert'})
     active_disasters = active_data.get('totalCount', 0)
 
-    # Most Recent Disaster
-    recent_query = {
+    # Most recent disaster
+    recent_data = get_reliefweb_stats({
+        'fields[include][]': ['name', 'status', 'date', 'primary_country', 'primary_type'],
         'limit': 1,
-        'sort': ['date:desc'],
-        'fields': {
-            'include': [
-                'name',
-                'status',
-                'date',
-                'primary_country',
-                'primary_type'
-            ]
-        }
-    }
-    recent_data = get_reliefweb_stats(recent_query)
-    recent_disaster = recent_data['data'][0]['fields']
+        'sort[]': 'date:desc'
+    })
+    recent_disaster = recent_data['data'][0]['fields'] if recent_data['data'] else {}
 
-    # Query for Multiple Filters
-    latestdisasters_query = {
+    # Latest disasters for stats
+    latest_data = get_reliefweb_stats({
+        'fields[include][]': ['primary_type', 'primary_country', 'status', 'date'],
         'limit': 100,
-        'sort': ['date:desc'],
-        'fields': {
-            'include': [
-                'primary_type',
-                'primary_country',
-                'status',
-                'date'
-            ]
-        }
-    }
-    latest_data = get_reliefweb_stats(latestdisasters_query)
+        'sort[]': 'date:desc'
+    })
 
-    # Combine Latest Disaasters
-    # And Count Them
-    commontype_types = [
-        item['fields']['primary_type']['name']
+    # Count disaster types
+    commontype_counter = Counter(item['fields']['primary_type']['name'] for item in latest_data['data'])
+    most_common_type, most_common_count = commontype_counter.most_common(1)[0] if commontype_counter else ("N/A", 0)
+
+    # Top countries
+    countries_counter = Counter(
+        (item['fields']['primary_country']['iso3'], item['fields']['primary_country']['name'])
         for item in latest_data['data']
-    ]
-    commontype_counter = Counter(commontype_types)
-    most_common_type, most_common_count = commontype_counter.most_common(1)[0]
-
-    # Top affected countries
-    countries = [
-        (
-            item['fields']['primary_country']['iso3'],
-            item['fields']['primary_country']['name']
-        )
-        for item in latest_data['data']
-    ]
-
-    countries_counter = Counter(countries)
+    )
     top_countries = [
-        {
-            'iso3': iso3.upper(),
-            'name': name,
-            'disasters': count
-        }
+        {'iso3': iso3.upper(), 'name': name, 'disasters': count}
         for ((iso3, name), count) in countries_counter.most_common(10)
     ]
 
-    # Amount of Statuses
-    status_list = [
-        item['fields']['status']
-        for item in latest_data['data']
-    ]
-    status_counter = Counter(status_list)
+    # Status counts
+    status_counter = Counter(item['fields']['status'] for item in latest_data['data'])
 
     # Disasters over time
     monthly_counts = {}
-
     for item in latest_data['data']:
-        if 'date' in item['fields'] and 'created' in item['fields']['date']:
-            created_time = item['fields']['date']['created']
-            try:
-                date_split = created_time.split('T')[0]
-                date_parts = date_split.split('-')
-                year_month = f'{date_parts[0]}-{date_parts[1].zfill(2)}'
-                if year_month in monthly_counts:
-                    monthly_counts[year_month] += 1
-                else:
-                    monthly_counts[year_month] = 1
-            except Exception:
-                pass
+        date_info = item['fields'].get('date', {})
+        created_time = date_info.get('created')
+        if created_time:
+            year_month = "-".join(created_time.split('T')[0].split('-')[:2])
+            monthly_counts[year_month] = monthly_counts.get(year_month, 0) + 1
 
-    disasters_overtime = []
-    for month in sorted(monthly_counts):
-        disasters_overtime.append({
-            'month': month,
-            'count': monthly_counts[month]
-        })
+    disasters_overtime = [{'month': m, 'count': c} for m, c in sorted(monthly_counts.items())]
 
     return JsonResponse({
         'total': total_disasters,
@@ -163,4 +98,3 @@ def reliefweb_stats(request):
         'disasters_overtime': disasters_overtime,
         'type_list': dict(commontype_counter)
     })
-
