@@ -40,17 +40,19 @@ def reliefweb_stats(request):
     total_data = get_reliefweb_stats({'limit': 0})
     total_disasters = total_data.get('totalCount', 0)
 
-    # Active disasters (status = alert)
+    # Active disasters
     active_data = get_reliefweb_stats({'limit': 0, 'filter[field]': 'status', 'filter[value]': 'alert'})
     active_disasters = active_data.get('totalCount', 0)
 
-    # Most recent disaster
+    # Most recent disaster (safe check)
     recent_data = get_reliefweb_stats({
         'fields[include][]': ['name', 'status', 'date', 'primary_country', 'primary_type'],
         'limit': 1,
         'sort[]': 'date:desc'
     })
-    recent_disaster = recent_data['data'][0]['fields'] if recent_data['data'] else {}
+    recent_disaster = {}
+    if recent_data.get('data') and len(recent_data['data']) > 0:
+        recent_disaster = recent_data['data'][0].get('fields', {})
 
     # Latest disasters for stats
     latest_data = get_reliefweb_stats({
@@ -60,13 +62,18 @@ def reliefweb_stats(request):
     })
 
     # Count disaster types
-    commontype_counter = Counter(item['fields']['primary_type']['name'] for item in latest_data['data'])
+    commontype_counter = Counter(
+        item['fields']['primary_type']['name']
+        for item in latest_data.get('data', [])
+        if item.get('fields') and item['fields'].get('primary_type')
+    )
     most_common_type, most_common_count = commontype_counter.most_common(1)[0] if commontype_counter else ("N/A", 0)
 
     # Top countries
     countries_counter = Counter(
         (item['fields']['primary_country']['iso3'], item['fields']['primary_country']['name'])
-        for item in latest_data['data']
+        for item in latest_data.get('data', [])
+        if item.get('fields') and item['fields'].get('primary_country')
     )
     top_countries = [
         {'iso3': iso3.upper(), 'name': name, 'disasters': count}
@@ -74,13 +81,17 @@ def reliefweb_stats(request):
     ]
 
     # Status counts
-    status_counter = Counter(item['fields']['status'] for item in latest_data['data'])
+    status_counter = Counter(
+        item['fields']['status'] 
+        for item in latest_data.get('data', [])
+        if item.get('fields') and item['fields'].get('status')
+    )
 
     # Disasters over time
     monthly_counts = {}
-    for item in latest_data['data']:
-        date_info = item['fields'].get('date', {})
-        created_time = date_info.get('created')
+    for item in latest_data.get('data', []):
+        fields = item.get('fields', {})
+        created_time = fields.get('date', {}).get('created')
         if created_time:
             year_month = "-".join(created_time.split('T')[0].split('-')[:2])
             monthly_counts[year_month] = monthly_counts.get(year_month, 0) + 1
