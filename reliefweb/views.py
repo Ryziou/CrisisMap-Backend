@@ -50,9 +50,17 @@ def reliefweb_stats(request):
         'limit': 1,
         'sort[]': 'date:desc'
     })
-    recent_disaster = {}
-    if recent_data.get('data') and len(recent_data['data']) > 0:
-        recent_disaster = recent_data['data'][0].get('fields', {})
+    recent_disaster = {
+    "name": "",
+    "status": "",
+    "date": "",
+    "primary_country": {},
+    "primary_type": {}
+    }
+    if recent_data.get("data") and len(recent_data["data"]) > 0:
+        recent_disaster = recent_data["data"][0].get("fields", recent_disaster)
+
+
 
     # Latest disasters for stats
     latest_data = get_reliefweb_stats({
