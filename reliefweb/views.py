@@ -3,10 +3,15 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from collections import Counter
 
+HEADERS = {
+    'User-Agent': 'CallumLiu-CrisisMap-CL96'
+}
+
 def get_reliefweb_stats(query):
     response = requests.post(
         'https://api.reliefweb.int/v1/disasters',
-        json=query
+        json=query,
+        headers=HEADERS
     )
     return response.json()
 
@@ -33,7 +38,8 @@ def reliefweb_disasters(request):
 
     response = requests.post(
         'https://api.reliefweb.int/v1/disasters',
-        json=query
+        json=query,
+        headers=HEADERS
     )
     return JsonResponse(response.json(), safe=False)
 
